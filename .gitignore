@@ -1,0 +1,44 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# Data directories
+input/*.mp4
+input/*.avi
+input/*.mkv
+output/*.mp4
+output/*.avi
+audio/*.wav
+audio/vi_segments/*.wav
+subtitles/*.json
+
+# Keep directory structure but ignore content
+!input/.gitkeep
+!output/.gitkeep
+!audio/.gitkeep
+!audio/vi_segments/.gitkeep
+!subtitles/.gitkeep
+
+# Logs
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Models cache
+.cache/
+models/
