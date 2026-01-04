@@ -19,6 +19,13 @@ AUDIO_SAMPLE_RATE = 16000
 AUDIO_NORMALIZE = True  # Chuẩn hóa âm lượng
 AUDIO_NOISE_REDUCTION = False  # Giảm noise (experimental)
 
+# Background audio settings (cho merge_audio_v3)
+BACKGROUND_VOLUME = 0.25  # Volume audio gốc (0.0-1.0) - 0.25 = 25%
+# Điều chỉnh tùy video:
+#   0.15-0.20: Background nhẹ (nhạc background ít, tập trung vào lời thoại)
+#   0.25-0.30: Background vừa phải (cân bằng giữa lời thoại và nhạc nền)
+#   0.35-0.40: Background rõ hơn (giữ nhiều âm thanh gốc)
+
 # Video settings
 VIDEO_CODEC = "copy"  # copy hoặc libx264
 AUDIO_CODEC = "aac"

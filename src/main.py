@@ -11,13 +11,16 @@ import sys
 import json
 from pathlib import Path
 
+# Import config
+import config
+
 # Import các module
 from extract_audio import extract_audio
 from asr_whisper import transcribe
 from voice_analysis import analyze_all_segments
 from translate import translate_segments
 from tts_advanced import tts_segments_advanced
-from merge_audio import merge_segments
+from merge_audio_v3 import merge_segments_with_background
 from merge_video import merge_video
 
 
@@ -90,11 +93,18 @@ def main():
                                      auto_voice=True, enable_mixing=True):
             raise Exception("Lỗi TTS")
         
-        # Bước 6: Ghép audio segments
+        # Bước 6: Ghép audio segments với background liên tục
         print("\n" + "="*60)
-        print("BƯỚC 6/7: GHÉP AUDIO SEGMENTS")
+        print("BƯỚC 6/7: GHÉP AUDIO SEGMENTS (VỚI BACKGROUND LIÊN TỤC)")
         print("="*60)
-        if not merge_segments(str(vi_json), str(vi_full_audio)):
+        # Sử dụng background_volume từ config (có thể điều chỉnh trong config.py)
+        if not merge_segments_with_background(
+            str(vi_json), 
+            str(original_audio),  # Audio gốc làm background
+            str(vi_full_audio),
+            background_volume=config.BACKGROUND_VOLUME,
+            normalize=True
+        ):
             raise Exception("Lỗi ghép audio")
         
         # Bước 7: Ghép audio vào video

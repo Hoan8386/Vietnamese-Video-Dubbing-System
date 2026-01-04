@@ -5,6 +5,11 @@ Phân tích giọng nói để detect gender và emotion
 import librosa
 import numpy as np
 import json
+import warnings
+
+# Tắt warning về PySoundFile
+warnings.filterwarnings('ignore', category=UserWarning, module='librosa')
+warnings.filterwarnings('ignore', category=FutureWarning, module='librosa')
 
 
 def analyze_audio_segment(audio_path, start_time, end_time, sr=16000):
@@ -21,11 +26,21 @@ def analyze_audio_segment(audio_path, start_time, end_time, sr=16000):
         dict với gender và emotion info
     """
     try:
-        # Load audio segment
-        y, sr = librosa.load(audio_path, sr=sr, offset=start_time, duration=end_time-start_time)
+        # Load audio segment với warning suppression
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            y, sr = librosa.load(audio_path, sr=sr, offset=start_time, duration=end_time-start_time)
         
         if len(y) == 0:
-            return {"gender": "female", "emotion": "neutral", "pitch_avg": 180}
+            return {
+                "gender": "female",
+                "emotion": "neutral",
+                "pitch_avg": 180.0,
+                "pitch_std": 20.0,
+                "energy": 0.03,
+                "speech_rate": 0.1,
+                "tts_rate_adjust": "0%"
+            }
         
         # 1. Phân tích pitch để detect gender
         pitches, magnitudes = librosa.piptrack(y=y, sr=sr, fmin=50, fmax=400)
@@ -75,7 +90,7 @@ def analyze_audio_segment(audio_path, start_time, end_time, sr=16000):
             rate_adjust = "+20%"
         else:
             emotion = "neutral"
-            rate_adjust = "0%"
+            rate_adjust = "+0%"  # Phải có dấu + để Edge TTS chấp nhận
         
         return {
             "gender": gender,
@@ -88,8 +103,16 @@ def analyze_audio_segment(audio_path, start_time, end_time, sr=16000):
         }
         
     except Exception as e:
-        print(f"  ⚠️ Lỗi phân tích voice: {e}")
-        return {"gender": "female", "emotion": "neutral", "pitch_avg": 180, "tts_rate_adjust": "0%"}
+        print(f"  ⚠️ Lỗi phân tích voice segment: {e}")
+        return {
+            "gender": "female",
+            "emotion": "neutral",
+            "pitch_avg": 180.0,
+            "pitch_std": 20.0,
+            "energy": 0.03,
+            "speech_rate": 0.1,
+            "tts_rate_adjust": "0%"
+        }
 
 
 def analyze_all_segments(audio_path, segments_json):
@@ -109,21 +132,30 @@ def analyze_all_segments(audio_path, segments_json):
         
         # Phân tích từng segment
         for i, seg in enumerate(segments):
-            analysis = analyze_audio_segment(
-                audio_path,
-                seg["start"],
-                seg["end"]
-            )
+            try:
+                analysis = analyze_audio_segment(
+                    audio_path,
+                    seg["start"],
+                    seg["end"]
+                )
+                
+                # Thêm thông tin vào segment
+                seg["voice_gender"] = analysis.get("gender", "female")
+                seg["voice_emotion"] = analysis.get("emotion", "neutral")
+                seg["voice_pitch"] = analysis.get("pitch_avg", 180.0)
+                seg["tts_rate_adjust"] = analysis.get("tts_rate_adjust", "0%")
+                
+                print(f"  [{i+1}/{len(segments)}] {seg['voice_gender'].upper()} | "
+                      f"Emotion: {seg['voice_emotion']} | "
+                      f"Pitch: {seg['voice_pitch']:.0f}Hz")
             
-            # Thêm thông tin vào segment
-            seg["voice_gender"] = analysis["gender"]
-            seg["voice_emotion"] = analysis["emotion"]
-            seg["voice_pitch"] = analysis["pitch_avg"]
-            seg["tts_rate_adjust"] = analysis["tts_rate_adjust"]
-            
-            print(f"  [{i+1}/{len(segments)}] {seg['voice_gender'].upper()} | "
-                  f"Emotion: {seg['voice_emotion']} | "
-                  f"Pitch: {seg['voice_pitch']:.0f}Hz")
+            except Exception as e:
+                print(f"  [{i+1}/{len(segments)}] ⚠️ Lỗi phân tích: {e}")
+                # Sử dụng giá trị mặc định
+                seg["voice_gender"] = "female"
+                seg["voice_emotion"] = "neutral"
+                seg["voice_pitch"] = 180.0
+                seg["tts_rate_adjust"] = "0%"
         
         # Lưu lại
         with open(segments_json, "w", encoding="utf-8") as f:

@@ -12,6 +12,11 @@ Tool tự động chuyển đổi video tiếng Anh sang tiếng Việt bằng A
   - 🎤 Tự động chọn giọng nam/nữ theo phân tích
   - 🎭 Điều chỉnh rate, pitch, volume theo emotion (excited, calm, urgent, neutral)
   - 🎵 Mix với audio gốc để giữ background emotion (optional)
+- ✅ **🎵 Background Audio Liên Tục (MỚI):**
+  - Giữ audio gốc (nhạc nền, âm thanh môi trường) xuyên suốt video
+  - Tự động giảm volume background (20-30%) để lời thoại nổi bật
+  - Không còn bị im lặng ở những đoạn không có lời thoại
+  - Dễ dàng điều chỉnh volume background qua config
 - ✅ Ghép audio vào video
 - ✅ Chạy 100% trên CPU (không cần GPU)
 - ✅ Xử lý batch (không realtime)
@@ -131,6 +136,22 @@ Video đã lồng tiếng sẽ có tại:
 - Voice Cloning: `output/video_vi_cloned.mp4`
 
 ## ⚙️ Cấu hình nâng cao
+
+### Điều chỉnh Background Audio Volume
+
+Xem hướng dẫn chi tiết tại: [BACKGROUND_AUDIO_GUIDE.md](BACKGROUND_AUDIO_GUIDE.md)
+
+**Tóm tắt:** Chỉnh trong `src/config.py`
+
+```python
+# src/config.py
+BACKGROUND_VOLUME = 0.25  # 25% volume audio gốc
+
+# Điều chỉnh theo loại video:
+# 0.15-0.20: Background nhẹ (Phim/Drama - nhạc nền thường to)
+# 0.25-0.30: Background vừa phải (Vlog/Tutorial - cân bằng)
+# 0.35-0.40: Background rõ hơn (Music Video - giữ nhiều nhạc)
+```
 
 ### Thay đổi model Whisper (trong asr_whisper.py)
 
@@ -258,13 +279,33 @@ _Thời gian phụ thuộc vào cấu hình máy_
 - ❌ Không xử lý realtime (chỉ batch)
 - ⚠️ TTS cần internet (sử dụng Edge TTS API)
 
+## 🔧 Troubleshooting
+
+Gặp lỗi? Xem hướng dẫn khắc phục: [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+
+**Lỗi phổ biến:**
+
+- Voice analysis errors → [Fixed in v3](TROUBLESHOOTING.md#1-voice-analysis-errors)
+- Background audio không liên tục → [Xem hướng dẫn](BACKGROUND_AUDIO_GUIDE.md)
+- FFmpeg not found → [Cài đặt FFmpeg](TROUBLESHOOTING.md#4-ffmpeg-errors)
+- Memory errors → [Giảm model size](TROUBLESHOOTING.md#5-memory-errors)
+
 ## 🎯 Roadmap
 
-- [ ] Thêm tùy chọn chọn giọng TTS
+- [x] ~~Thêm option giữ audio gốc + mix với audio VI~~ ✅ Done (v3)
+- [x] ~~Background audio liên tục~~ ✅ Done (v3)
+- [x] ~~Tự động chọn giọng nam/nữ~~ ✅ Done
 - [ ] Hỗ trợ nhiều ngôn ngữ
 - [ ] UI web đơn giản
-- [ ] Tối ưu tốc độ xử lý
-- [ ] Thêm option giữ audio gốc + mix với audio VI
+- [ ] Tối ưu tốc độ xử lý (parallel processing)
+- [ ] Lip-sync với Wav2Lip
+
+## 📚 Documentation
+
+- [README.md](README.md) - Tài liệu chính
+- [BACKGROUND_AUDIO_GUIDE.md](BACKGROUND_AUDIO_GUIDE.md) - Hướng dẫn background audio
+- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Khắc phục lỗi
+- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Lịch sử cải tiến
 
 ## 📄 License
 

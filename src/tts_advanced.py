@@ -207,10 +207,12 @@ def tts_segments_advanced(segments_json, original_audio, out_dir, auto_voice=Tru
                         else:
                             # Fallback: dùng TTS only
                             os.rename(tts_temp, final_path)
-                            print(f"  [{i+1}/{len(segments)}] 🎤 {voice.UPPER()} | "
+                            print(f"  [{i+1}/{len(segments)}] 🎤 {voice.upper()} | "
                                   f"{emotion} | TTS only")
                     else:
                         os.rename(tts_temp, final_path)
+                        print(f"  [{i+1}/{len(segments)}] 🎤 {voice.upper()} | "
+                              f"{emotion} | TTS only")
                 else:
                     # Chỉ dùng TTS
                     os.rename(tts_temp, final_path)
