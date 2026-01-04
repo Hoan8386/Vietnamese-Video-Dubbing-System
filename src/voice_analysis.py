@@ -84,12 +84,12 @@ def analyze_audio_segment(audio_path, start_time, end_time, sr=16000):
             "pitch_std": float(pitch_std),
             "energy": float(energy),
             "speech_rate": float(speech_rate),
-            "rate_adjust": rate_adjust
+            "tts_rate_adjust": rate_adjust
         }
         
     except Exception as e:
         print(f"  ⚠️ Lỗi phân tích voice: {e}")
-        return {"gender": "female", "emotion": "neutral", "pitch_avg": 180, "rate_adjust": "0%"}
+        return {"gender": "female", "emotion": "neutral", "pitch_avg": 180, "tts_rate_adjust": "0%"}
 
 
 def analyze_all_segments(audio_path, segments_json):
@@ -119,7 +119,7 @@ def analyze_all_segments(audio_path, segments_json):
             seg["voice_gender"] = analysis["gender"]
             seg["voice_emotion"] = analysis["emotion"]
             seg["voice_pitch"] = analysis["pitch_avg"]
-            seg["tts_rate_adjust"] = analysis["rate_adjust"]
+            seg["tts_rate_adjust"] = analysis["tts_rate_adjust"]
             
             print(f"  [{i+1}/{len(segments)}] {seg['voice_gender'].upper()} | "
                   f"Emotion: {seg['voice_emotion']} | "

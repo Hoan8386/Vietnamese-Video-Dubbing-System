@@ -8,6 +8,7 @@ from pydub import AudioSegment
 from pydub.effects import normalize
 import edge_tts
 import asyncio
+from text_cleaner import clean_text_for_tts, validate_text
 
 
 # Danh sách giọng tiếng Việt
@@ -19,22 +20,18 @@ VIETNAMESE_VOICES = {
 
 async def _tts_with_ssml(text, output_path, voice="female", rate="+0%", pitch="+0Hz", volume="+0%"):
     """
-    TTS với SSML control chi tiết
+    TTS đơn giản với parameters trực tiếp (không dùng SSML)
     """
     voice_name = VIETNAMESE_VOICES.get(voice, VIETNAMESE_VOICES["female"])
     
-    # SSML với prosody control
-    ssml = f"""
-    <speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="vi-VN">
-        <voice name="{voice_name}">
-            <prosody rate="{rate}" pitch="{pitch}" volume="{volume}">
-                {text}
-            </prosody>
-        </voice>
-    </speak>
-    """
-    
-    communicate = edge_tts.Communicate(ssml, voice_name)
+    # Dùng plain text với parameters - Edge TTS sẽ tự xử lý
+    communicate = edge_tts.Communicate(
+        text=text,
+        voice=voice_name,
+        rate=rate,
+        pitch=pitch,
+        volume=volume
+    )
     await communicate.save(output_path)
 
 
@@ -144,6 +141,20 @@ def tts_segments_advanced(segments_json, original_audio, out_dir, auto_voice=Tru
                 seg["vi_audio_path"] = None
                 continue
             
+            # Clean và validate text trước khi TTS
+            is_valid, cleaned_text, warning = validate_text(seg["vi_text"])
+            
+            if not is_valid:
+                print(f"  [{i+1}/{len(segments)}] ⚠️ Skip: {warning}")
+                seg["vi_audio_path"] = None
+                continue
+            
+            if warning:
+                print(f"  [{i+1}/{len(segments)}] ⚠️ {warning}")
+            
+            # Cập nhật text đã clean
+            seg["vi_text_cleaned"] = cleaned_text
+            
             final_path = os.path.join(out_dir, f"{i:04d}.mp3")
             
             try:
@@ -173,10 +184,10 @@ def tts_segments_advanced(segments_json, original_audio, out_dir, auto_voice=Tru
                     volume = "+0%"
                     emotion = "neutral"
                 
-                # 2. Generate TTS
+                # 2. Generate TTS với cleaned text
                 tts_temp = os.path.join(temp_dir, f"{i:04d}_tts.mp3")
                 asyncio.run(_tts_with_ssml(
-                    seg["vi_text"],
+                    cleaned_text,  # Dùng cleaned text
                     tts_temp,
                     voice,
                     rate,
@@ -196,7 +207,7 @@ def tts_segments_advanced(segments_json, original_audio, out_dir, auto_voice=Tru
                         else:
                             # Fallback: dùng TTS only
                             os.rename(tts_temp, final_path)
-                            print(f"  [{i+1}/{len(segments)}] 🎤 {voice.upper()} | "
+                            print(f"  [{i+1}/{len(segments)}] 🎤 {voice.UPPER()} | "
                                   f"{emotion} | TTS only")
                     else:
                         os.rename(tts_temp, final_path)

@@ -57,14 +57,28 @@ def merge_segments(segments_json, out_wav):
                     # Bỏ qua segment lỗi, tiếp tục các segment khác
         
         # Xuất file
-        os.makedirs(os.path.dirname(out_wav), exist_ok=True)
-        final_audio.export(out_wav, format="wav")
+        out_dir = os.path.dirname(out_wav)
+        if out_dir:  # Tạo thư mục nếu path có chứa directory
+            os.makedirs(out_dir, exist_ok=True)
         
-        print(f"✅ Ghép audio hoàn tất: {out_wav}")
+        print(f"💾 Đang xuất file audio: {out_wav}")
+        final_audio.export(out_wav, format="wav", bitrate="192k")
+        
+        # Kiểm tra file đã tạo
+        if os.path.exists(out_wav):
+            file_size = os.path.getsize(out_wav) / (1024*1024)
+            print(f"✅ Ghép audio hoàn tất: {out_wav}")
+            print(f"📁 Kích thước: {file_size:.2f} MB")
+        else:
+            print(f"❌ File không được tạo: {out_wav}")
+            return False
+        
         return True
         
     except Exception as e:
         print(f"❌ Lỗi ghép audio: {e}")
+        import traceback
+        traceback.print_exc()
         return False
 
 
