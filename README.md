@@ -1,433 +1,372 @@
-# 🎬 Tool Lồng Tiếng Tự Động - Vietnamese Auto Dubbing (GPU Version)
+# 🎬 Tool Lồng Tiếng với RVC Voice Cloning
 
-Tool tự động chuyển đổi video tiếng Anh sang tiếng Việt bằng AI với tăng tốc GPU.
+Tool tự động lồng tiếng video với công nghệ Voice Cloning sử dụng RVC (Retrieval-based Voice Conversion), tối ưu cho **RTX 3050 4GB**.
 
-> **⚠️ Lưu ý:** Đây là nhánh **GPU** - yêu cầu NVIDIA GPU với CUDA support.  
-> Cho phiên bản CPU, xem nhánh `main`.
+## ✨ Tính Năng
 
-## 🎮 Yêu Cầu GPU
+- ✅ **ASR (Whisper)**: Transcribe audio từ video
+- ✅ **Translation**: Dịch tự động English → Vietnamese
+- ✅ **TTS (Edge TTS)**: Text-to-Speech tiếng Việt chất lượng cao, miễn phí
+- ✅ **Voice Cloning (RVC)**: Clone giọng nói từ video gốc với RVC
+- ✅ **Background Audio**: Giữ nhạc nền và sound effects
+- ✅ **GPU Optimization**: Tối ưu cho RTX 3050 4GB VRAM
 
-- **GPU:** NVIDIA GTX 1050 trở lên (khuyến nghị GTX 1660+)
-- **VRAM:** Tối thiểu 4GB (khuyến nghị 6GB+)
-- **CUDA:** 11.8 hoặc 12.1
-- **Driver:** NVIDIA Driver 470+ trở lên
+## 🚀 Quick Start
 
-## ✨ Tính năng
+### 1. Cài Đặt
 
-- ✅ Tách audio từ video
-- ✅ **Nhận dạng giọng nói (ASR) bằng Whisper trên GPU** - Nhanh hơn 5-10x
-- ✅ **Phân tích giọng nói:** Tự động detect gender (nam/nữ) và emotion
-- ✅ Dịch tự động Anh → Việt (GPU accelerated)
-- ✅ **Advanced TTS:**
-  - 🎤 Tự động chọn giọng nam/nữ theo phân tích
-  - 🎭 Điều chỉnh rate, pitch, volume theo emotion (excited, calm, urgent, neutral)
-  - 🎵 Mix với audio gốc để giữ background emotion (optional)
-- ✅ **🎵 Background Audio Liên Tục:**
-  - Giữ audio gốc (nhạc nền, âm thanh môi trường) xuyên suốt video
-  - Tự động giảm volume background (20-30%) để lời thoại nổi bật
-  - Không còn bị im lặng ở những đoạn không có lời thoại
-  - Dễ dàng điều chỉnh volume background qua config
-- ✅ Ghép audio vào video
-- ✅ **Tận dụng 100% GPU CUDA** - Xử lý nhanh hơn CPU 5-10x
-- ✅ Xử lý batch (không realtime)
-- ✅ Hỗ trợ Windows & Linux với NVIDIA GPU
-
-## 📁 Cấu trúc thư mục
-
-```
-tool_01/                    # Thư mục gốc dự án
-├── input/                  # Đặt video gốc vào đây
-│   └── video.mp4          # Video input cần lồng tiếng
-│
-├── output/                 # Video output đã xử lý
-│   └── video_vi.mp4       # Video đã lồng tiếng tiếng Việt
-│
-├── audio/                  # Audio trung gian (tạo tự động)
-│   ├── original.wav       # Audio tách từ video gốc
-│   ├── vi_full.wav        # Audio tiếng Việt hoàn chỉnh
-│   └── vi_segments/       # Các audio segments từng câu
-│       ├── segment_0000.wav
-│       ├── segment_0001.wav
-│       └── ...
-│
-├── subtitles/              # Phụ đề và bản dịch (tạo tự động)
-│   ├── en.json            # Transcript tiếng Anh từ Whisper
-│   └── vi.json            # Bản dịch tiếng Việt + audio paths
-│
-├── src/                    # Source code chính (GPU optimized)
-│   ├── main_openvoice.py  # 🚀 Pipeline chính - CHẠY FILE NÀY (OpenVoice)
-│   ├── tts_openvoice.py   # 🎙️ OpenVoice TTS - Voice Cloning trên GPU
-│   ├── config.py          # ⚙️ Cấu hình (model, volume, paths)
-│   ├── asr_whisper.py     # 🎤 ASR - Whisper trên GPU
-│   ├── voice_analysis.py  # 🎭 Phân tích giọng nói (gender/emotion)
-│   ├── translate.py       # 🌍 Dịch Anh-Việt (GPU accelerated)
-│   ├── tts_advanced.py    # 🔊 TTS nâng cao (Edge TTS - backup option)
-│   ├── text_cleaner.py    # ✨ Clean text trước TTS
-│   ├── merge_audio_v3.py  # 🎵 Ghép audio với background
-│   ├── merge_video.py     # 🎬 Ghép audio vào video
-│   ├── extract_audio.py   # 📤 Tách audio từ video
-│   └── utils.py           # 🛠️ Các hàm tiện ích
-│
-├── venv/                   # Virtual environment (tạo khi cài đặt)
-│   ├── Scripts/           # Windows
-│   └── bin/               # Linux
-│
-├── OpenVoice/              # OpenVoice models (tải riêng)
-│   └── checkpoints/       # Voice cloning models (~2GB)
-│       ├── base_speakers/
-│       └── converter/
-│
-├── requirements.txt        # Python dependencies với CUDA support
-├── README.md              # 📖 Tài liệu này
-└── .gitignore             # Git ignore rules
-```
-
-**Lưu ý:**
-
-- Chỉ cần tạo thư mục `input/` và đặt video vào
-- Các thư mục `output/`, `audio/`, `subtitles/` sẽ được tạo tự động khi chạy
-- File trong `audio/` và `subtitles/` có thể xóa sau khi hoàn thành để tiết kiệm dung lượng
-
-## 🚀 Cài đặt
-
-### 0. Kiểm tra GPU
-
-Trước khi cài đặt, kiểm tra GPU của bạn:
+#### Windows
 
 ```bash
-# Kiểm tra NVIDIA GPU
-nvidia-smi
+# Clone repository
+git clone <your-repo>
+cd tool_01
 
-# Kiểm tra CUDA version
-nvcc --version
+# Chạy setup script
+setup_rvc.bat
 ```
 
-### 1. Cài đặt CUDA Toolkit (nếu chưa có)
-
-**Windows:**
-
-- Tải CUDA Toolkit 11.8 hoặc 12.1 từ: https://developer.nvidia.com/cuda-downloads
-- Cài đặt theo hướng dẫn
-
-**Linux:**
+#### Manual Setup
 
 ```bash
-# Ubuntu/Debian
-wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.0-1_all.deb
-sudo dpkg -i cuda-keyring_1.0-1_all.deb
-sudo apt-get update
-sudo apt-get -y install cuda
-```
+# 1. Cài PyTorch với CUDA 11.7
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu117
 
-### 2. Cài đặt FFmpeg
+# 2. Cài dependencies
+pip install -r requirements.txt
 
-**Windows:**
-
-```bash
-# Tải từ: https://ffmpeg.org/download.html
-# Hoặc dùng Chocolatey:
-choco install ffmpeg
-```
-
-**Linux:**
-
-```bash
-sudo apt update
-sudo apt install ffmpeg
-```
-
-### 3. Cài đặt OpenVoice và checkpoints
-
-```bash
-# Clone OpenVoice repository
-cd E:\tool\tool_01
-git clone https://github.com/myshell-ai/OpenVoice.git
-
-# Download checkpoints (~2GB)
-# Cách 1: Từ S3
-cd OpenVoice
-Invoke-WebRequest -Uri "https://myshell-public-repo-hosting.s3.amazonaws.com/openvoice/checkpoints_1226.zip" -OutFile "checkpoints.zip"
-Expand-Archive -Path "checkpoints.zip" -DestinationPath "."
-Remove-Item "checkpoints.zip"
-
-# Cài OpenVoice
+# 3. Clone RVC
+git clone https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI.git
+cd Retrieval-based-Voice-Conversion-WebUI
+pip install -r requirements.txt
 cd ..
-pip install -e OpenVoice/
+
+# 4. Download models (xem INSTALL_RVC.md)
 ```
 
-### 4. Cài đặt Python packages với CUDA support
+Xem hướng dẫn chi tiết: **[INSTALL_RVC.md](INSTALL_RVC.md)**
+
+### 2. Sử Dụng
+
+**Lưu ý: RVC là BẮT BUỘC trong phiên bản này**
+
+#### Basic Usage
 
 ```bash
-# Tạo virtual environment (khuyến nghị)
-python -m venv venv
+python src/main_rvc.py input/video.mp4 \
+    --rvc-model logs/my_model/added_model.pth \
+    --rvc-index logs/my_model/added_index.index
+```
 
-# Kích hoạt
-# Windows:
-venv\Scripts\activate
-# Linux:
-source venv/bin/activate
+#### Advanced Options
 
-# Cài đặt PyTorch với CUDA support
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
+```bash
+python src/main_rvc.py input/video.mp4 ^
+    --enable-rvc ^
+    --rvc-model Retrieval-based-Voice-Conversion-WebUI/logs/my_model/added_model.pth ^
+    --rvc-index Retrieval-based-Voice-Conversion-WebUI/logs/my_model/added_index.index
+```
 
-# Cài đặt các dependencies khác
+#### Advanced Options
+
+```bash
+python src/main_rvc.py input/video.mp4 ^
+    --rvc-model <path_to_model.pth> ^
+    --rvc-index <path_to_index.index> ^
+    --output output/video_final.mp4 ^
+    --model small ^
+    --rvc-index-rate 0.75 ^
+    --rvc-f0-method rmvpe ^
+    --background-volume 0.20 ^
+    --clean
+```
+
+## 📋 Options
+
+### Main Arguments
+
+| Argument       | Mô Tả                                             | Mặc Định                  |
+| -------------- | ------------------------------------------------- | ------------------------- |
+| `input`        | Video input path                                  | `input/video.mp4`         |
+| `-o, --output` | Video output path                                 | `output/video_vi_rvc.mp4` |
+| `-m, --model`  | Whisper model size (tiny/base/small/medium/large) | `small`                   |
+
+### RVC Options
+
+| Argument           | Mô Tả                                    | Mặc Định |
+| ------------------ | ---------------------------------------- | -------- |
+| `--rvc-model`      | Path đến RVC model (.pth) - **BẮT BUỘC** | -        |
+| `--rvc-index`      | Path đến RVC index (.index)              | -        |
+| `--rvc-index-rate` | Index rate (0.0-1.0)                     | `0.75`   |
+| `--rvc-f0-method`  | F0 method (rmvpe/harvest/crepe/pm)       | `rmvpe`  |
+
+### Audio Options
+
+| Argument              | Mô Tả                                 | Mặc Định |
+| --------------------- | ------------------------------------- | -------- |
+| `--background-volume` | Volume của background audio (0.0-1.0) | `0.20`   |
+| `--clean`             | Xóa file trung gian                   | `False`  |
+
+## 🎯 Workflow
+
+```
+Input Video
+    ↓
+[1] Extract Audio
+    ↓
+[2] Transcribe (Whisper)
+    ↓
+[3] Translate EN→VI
+    ↓
+[4] Text-to-Speech VI (Edge TTS)
+    ↓
+[5] Voice Cloning (RVC) ← BẮT BUỘC
+    ↓
+[6] Merge Audio + Background
+    ↓
+[7] Merge Video + Audio
+    ↓
+Output Video
+```
+
+## 🎓 Training RVC Model
+
+### 1. Chuẩn Bị Data
+
+- **Audio sạch**: Không noise, echo
+- **Độ dài**: 10-30 phút (tối thiểu 10 phút)
+- **Format**: WAV, 16-48kHz
+- **Đặt vào**: `Retrieval-based-Voice-Conversion-WebUI/dataset/<speaker_name>/`
+
+### 2. Train qua WebUI
+
+```bash
+cd Retrieval-based-Voice-Conversion-WebUI
+python infer-web.py
+```
+
+1. Mở browser: `http://localhost:7865`
+2. Tab **"训练"** (Training)
+3. Set parameters:
+   - Tên model: `my_model`
+   - Dataset path: `dataset/my_speaker`
+   - Epochs: `500` (RTX 3050: ~2-4 giờ)
+   - Batch size: `4-6`
+4. Click **"训练模型"** → **"训练特征索引"**
+
+### 3. Sử Dụng Model
+
+Model được lưu tại:
+
+- Model: `logs/my_model/added_*.pth`
+- Index: `logs/my_model/added_*.index`
+
+## ⚙️ Tối Ưu cho RTX 3050 4GB
+
+### Memory Management
+
+```python
+# Tự động được apply trong code
+torch.cuda.set_per_process_memory_fraction(0.85, 0)
+torch.backends.cudnn.benchmark = True
+torch.backends.cuda.matmul.allow_tf32 = True
+```
+
+### Recommended Settings
+
+| Setting               | RTX 3050 4GB | RTX 3060 6GB   | RTX 3080 10GB |
+| --------------------- | ------------ | -------------- | ------------- |
+| Batch Size (Training) | 4-6          | 8              | 16            |
+| FP16                  | ✅ Bắt buộc  | ✅ Khuyên dùng | ⚠️ Tùy chọn   |
+| F0 Method             | rmvpe        | rmvpe          | crepe         |
+| Index Rate            | 0.75         | 0.75           | 0.8           |
+
+### Giảm VRAM
+
+```bash
+# Close tất cả app khác
+# Giảm batch size
+--batch-size 2
+
+# Giảm model size
+--model base  # Thay vì small/medium
+```
+
+## 📊 Performance
+
+### RTX 3050 4GB
+
+| Task                               | Time       | GPU Usage |
+| ---------------------------------- | ---------- | --------- |
+| Training (500 epochs, 10min audio) | 2-4 giờ    | 95%       |
+| Inference (1 min audio)            | 2-5 giây   | 80%       |
+| Batch Inference (10 min audio)     | 20-50 giây | 90%       |
+
+### Quality
+
+- **Voice Similarity**: 85-95% (với good training data)
+- **Naturalness**: 80-90%
+- **Stability**: 90-95%
+
+## 🐛 Troubleshooting
+
+### 1. CUDA Out of Memory
+
+**Triệu chứng**: `RuntimeError: CUDA out of memory`
+
+**Giải pháp**:
+
+```bash
+# Giảm batch size
+--batch-size 2
+
+# Giảm model size
+--model base
+
+# Close apps khác
+# Restart Python để clear cache
+```
+
+### 2. RVC Not Working
+
+**Triệu chứng**: "RVC không khả dụng"
+
+**Giải pháp**:
+
+```bash
+# Check RVC installation
+cd Retrieval-based-Voice-Conversion-WebUI
+python infer-web.py
+
+# Re-install dependencies
 pip install -r requirements.txt
 ```
 
-⏱️ **Lưu ý:** Quá trình cài đặt có thể mất 15-20 phút do download CUDA libraries, OpenVoice và models.
+### 3. Model Not Found
 
-### 5. Verify GPU Setup
+**Triệu chứng**: "Model chưa được load"
 
-```bash
-python -c "import torch; print(f'CUDA Available: {torch.cuda.is_available()}'); print(f'GPU: {torch.cuda.get_device_name(0) if torch.cuda.is_available() else \"None\"}')"
-```
-
-Kết quả mong đợi:
-
-```
-CUDA Available: True
-GPU: NVIDIA GeForce GTX 1660
-```
-
-## 📖 Sử dụng
-
-### Bước 1: Đặt video vào thư mục input
+**Giải pháp**:
 
 ```bash
-# Copy video của bạn vào:
-input/video.mp4
+# Check model path
+ls Retrieval-based-Voice-Conversion-WebUI/logs/my_model/
+
+# Đảm bảo có:
+# - added_*.pth
+# - added_*.index
 ```
 
-### Bước 2: Chạy tool với GPU
+### 4. Poor Voice Quality
+
+**Nguyên nhân**:
+
+- Training data ít hoặc kém chất lượng
+- Index rate không phù hợp
+- F0 method không tối ưu
+
+**Giải pháp**:
 
 ```bash
-cd src
-python main.py
+# Thử index rate khác nhau
+--rvc-index-rate 0.5  # Hoặc 0.6, 0.7, 0.8, 0.9
+
+# Thử F0 method khác
+--rvc-f0-method harvest  # Hoặc crepe
+
+# Train lại với data tốt hơn (15-30 min)
 ```
 
-**Tính năng GPU:**
+## 📁 Cấu Trúc Project
 
-- ⚡ **Whisper ASR trên GPU** - Nhanh hơn 5-10x so với CPU
-- 🚀 **Translation trên GPU** - Xử lý nhanh hơn 3-5x
-- 🎭 Tự động chọn giọng nam/nữ và điều chỉnh emotion
-- 🎵 Advanced TTS với Edge TTS (online)
-
-**Thời gian xử lý với GPU (GTX 1660):**
-
-- Video 5 phút: ~2-3 phút
-- Video 10 phút: ~4-6 phút
-- Video 30 phút: ~12-18 phút
-
-### Bước 3: Lấy kết quả
-
-Video đã lồng tiếng sẽ có tại: `output/video_vi.mp4`
-
-## ⚙️ Cấu hình nâng cao
-
-### Điều chỉnh Background Audio Volume
-
-Xem hướng dẫn chi tiết tại: [BACKGROUND_AUDIO_GUIDE.md](BACKGROUND_AUDIO_GUIDE.md)
-
-**Tóm tắt:** Chỉnh trong `src/config.py`
-
-```python
-# src/config.py
-BACKGROUND_VOLUME = 0.25  # 25% volume audio gốc
-
-# Điều chỉnh theo loại video:
-# 0.15-0.20: Background nhẹ (Phim/Drama - nhạc nền thường to)
-# 0.25-0.30: Background vừa phải (Vlog/Tutorial - cân bằng)
-# 0.35-0.40: Background rõ hơn (Music Video - giữ nhiều nhạc)
+```
+tool_01/
+├── input/                          # Video input
+│   └── video.mp4
+├── output/                         # Video output
+│   └── video_vi_rvc.mp4
+├── audio/                          # Audio temp files
+│   ├── original.wav
+│   ├── vi_segments/               # TTS audio
+│   ├── rvc_segments/              # RVC converted audio
+│   └── final_vi_with_bg.wav
+├── subtitles/                      # Subtitles
+│   ├── en.json
+│   └── vi.json
+├── src/                            # Source code
+│   ├── main_rvc.py                # Main pipeline với RVC
+│   ├── voice_cloning_rvc.py       # RVC wrapper
+│   ├── asr_whisper.py
+│   ├── translate.py
+│   ├── tts_openvoice.py
+│   ├── merge_audio_v3.py
+│   ├── merge_video.py
+│   └── utils.py
+├── Retrieval-based-Voice-Conversion-WebUI/  # RVC
+│   ├── assets/
+│   ├── logs/                       # Trained models
+│   ├── weights/
+│   └── infer-web.py
+├── requirements.txt
+├── setup_rvc.bat                   # Setup script
+├── INSTALL_RVC.md                  # Hướng dẫn cài đặt
+└── README_RVC.md                   # This file
 ```
 
-### Thay đổi model Whisper (trong asr_whisper.py)
+## 🔗 Resources
 
-```python
-# Model nhỏ hơn (nhanh hơn, ít chính xác hơn)
-transcribe(audio, out_json, model_size="tiny")   # ~1GB VRAM
-transcribe(audio, out_json, model_size="base")   # ~1GB VRAM
+- **RVC GitHub**: https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI
+- **Models**: https://huggingface.co/lj1995/VoiceConversionWebUI
+- **Discord**: https://discord.gg/HcsmBBGyVk
+- **Whisper**: https://github.com/openai/whisper
 
-# Model vừa (khuyến nghị cho GPU)
-transcribe(audio, out_json, model_size="small")  # ~2GB VRAM (mặc định)
+## 📝 Examples
 
-# Model lớn hơn (chính xác hơn, cần GPU mạnh)
-transcribe(audio, out_json, model_size="medium") # ~5GB VRAM
-transcribe(audio, out_json, model_size="large")  # ~10GB VRAM (yêu cầu RTX 3060+)
-```
-
-**Khuyến nghị theo GPU:**
-
-- GTX 1050/1650 (4GB VRAM): `small` hoặc `base`
-- GTX 1660/RTX 2060 (6GB VRAM): `small` hoặc `medium`
-- RTX 3060/3070+ (8GB+ VRAM): `medium` hoặc `large`
-
-### Thay đổi model dịch (trong translate.py)
-
-```python
-# Model khác (nếu chất lượng dịch chưa tốt)
-translator = pipeline(
-    "translation",
-    model="VietAI/envit5-translation"  # Alternative
-)
-```
-
-## 🔧 Xử lý lỗi
-
-### Lỗi: "ffmpeg not found"
-
-CUDA Out of Memory
+### Example 1: Basic Dubbing
 
 ```bash
-# Giảm model size trong main.py:
-transcribe(..., model_size="base")  # Thay vì "small"
-
-# Hoặc clear CUDA cache:
-import torch
-torch.cuda.empty_cache()
-
-# Kiểm tra VRAM usage:
-nvidia-smi
+python src/main_rvc.py input/movie.mp4 \
+    --rvc-model logs/speaker/added_model.pth \
+    --rvc-index logs/speaker/added_index.index \
+    -o output/movie_vi.mp4
 ```
 
-### Lỗi: "CUDA not available"
+### Example 2: High Quality Settings
 
 ```bash
-# Kiểm tra PyTorch có nhận GPU không:
-python -c "import torch; print(torch.cuda.is_available())"
-
-# Nếu False, cài lại PyTorch với CUDA:
-pip uninstall torch torchvision torchaudio
-pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu118
-# Nếu chưa có, cài theo hướng dẫn phần "Cài đặt FFmpeg"
+python src/main_rvc.py input/interview.mp4 \
+    --rvc-model logs/interviewer_voice/added_model.pth \
+    --rvc-index logs/interviewer_voice/added_index.index \
+    --rvc-index-rate 0.8 \
+    --rvc-f0-method rmvpe
 ```
 
-### Lỗi: Out of Memory
+### Example 3: Full Production
 
 ```bash
-# Giảm model size trong main.py:
-transcribe(..., model_size="tiny")  # Thay vì "small"
+python src/main_rvc.py input/presentation.mp4 \
+    --model medium \
+    --rvc-model logs/speaker/added_model.pth \
+    --rvc-index logs/speaker/added_index.index \
+    --rvc-f0-method crepe \
+    --background-volume 0.15 \
+    -o output/presentation_vi_hq.mp4
 ```
 
-## ⚡ Hiệu Năng GPU + OpenVoice
+## 📜 License
 
-### Thời gian xử lý (GPU + OpenVoice Voice Cloning)
+MIT License
 
-| Video   | GTX 1650 (4GB) | GTX 1660 (6GB) | RTX 3060 (12GB) | RTX 4070 (12GB) |
-| ------- | -------------- | -------------- | --------------- | --------------- |
-| 5 phút  | ~5-7 phút      | ~4-5 phút      | ~2-3 phút       | ~1.5-2 phút     |
-| 10 phút | ~10-14 phút    | ~8-10 phút     | ~4-6 phút       | ~3-4 phút       |
-| 30 phút | ~30-42 phút    | ~24-30 phút    | ~12-18 phút     | ~9-12 phút      |
+## 👥 Credits
 
-_Thời gian dựa trên Whisper `small` model + OpenVoice standard mode (không dùng --segment-reference)._
-
-### So sánh CPU vs GPU (với OpenVoice)
-
-| Metric                   | CPU (i7-10700) | GPU (GTX 1660) | Tăng tốc          |
-| ------------------------ | -------------- | -------------- | ----------------- | ------------- |
-| Whisper ASR (5 phút)     | ~8 phút        | ~1 phút        | **8x**            |
-| Translation (5 phút)     | ~2 phút        | ~30 giây       | **4x**            |
-| OpenVoice TTS (5 phút)   | ~35 phút       | ~3 phút        | **12x**           |
-| **Tổng (5 phút video)**  | **~45 phút**   | **~4.5 phút**  | **~10x**          | Voice win\*\* |
-| Giữ nhịp điệu/intonation | ❌             | ✅             | **OpenVoice win** |
-| Quality tổng thể         | ⭐⭐⭐         | ⭐⭐⭐⭐⭐     | **OpenVoice win** |
-
-### So sánh CPU vs GPU
-
-| Metric                  | CPU (i7-10700) | GPU (GTX 1660) | Tăng tốc |
-| ----------------------- | -------------- | -------------- | -------- |
-| Whisper ASR (5 phút)    | ~8 phút        | ~1 phút        | **8x**   |
-| Translation (5 phút)    | ~2 phút        | ~30 giây       | **4x**   |
-| **Tổng (5 phút video)** | **~12 phút**   | **~2.5 phút**  | **~5x**  |
-
-### Voice Cloning Mode
-
-| Video   | CPU (i7)  | GPU (RTX 3060) |
-| ------- | --------- | -------------- |
-| 5 phút  | ~40 phút  | ~8 phút        |
-| 10 phút | ~80 phút  | ~15 phút       |
-| 30 phút | ~240 phút | ~45 phút       |
-
-- **Whisper**: openai/whisper (small - 244M params)
-- **Translation**: Helsinki-NLP/opus-mt-en-vi
-- **Voice Cloning**: OpenVoice (zero-shot voice cloning)
-- **Speaker Embedding**: SE-ResNet
-  | ------- | ---------- | --------------------- |
-  | 5 phút | 300s | ~10-15 phút |
-  | 10 phút | 600s | ~20-30 phút |
-  | 30 phút | 1800s | ~60-90 phút |
-
-_Thời gian phụ thuộc vào cấu hình máy_
-
-## 📝 Chi tiết kỹ thuật
-
-### Pipeline
-
-1. **Extract Audio** → ffmpeg tách audio từ video
-2. **ASR** → Whisper nhận dạng → timestamps + text
-3. **Translate** → Helsinki-NLP/opus-mt-en-vi
-4. **TTS** → Microsoft Edge TTS Vietnamese (HoaiMy Neural)
-5. **Merge Audio** → pydub ghép theo timestamps
-6. **Merge Video** → ffmpeg ghép audio vào video
-
-**Chung:**
-
-- ❌ Không li (GPU Accelerated)
-
-1. **Extract Audio** → ffmpeg tách audio từ video
-2. **ASR (GPU)** → Whisper CUDA nhận dạng → timestamps + text (5-10x nhanh hơn)
-3. **Voice Analysis (GPU)** → Detect gender & emotion
-4. **Translate (GPU)** → Helsinki-NLP model trên CUDA (3-5x nhanh hơn)
-5. **TTS** → Microsoft Edge TTS Vietnamese với auto voice selection
-6. **Merge Audio** → pydub ghép theo timestamps với background audio
-7. **Merge Video** → ffmpeg ghép audio vào video
-
-### Models & Tech Stack
-
-- **ASR**: OpenAI Whisper (small/medium) - CUDA accelerated
-- **Translation**: Helsinki-NLP/opus-mt-en-vi - GPU inference
-- **Voice Analysis**: librosa + scikit-learn - GPU accelerated
-- **TTS**: Microsoft Edge TTS (vi-VN HoaiMy/NamMinh Neural)
-- **Audio Processing**: pydub, librosa, scipy
-- **GPU Framework**: PyTorch with CUDA 11.8/12.1.md](TROUBLESHOOTING.md)
-  & Lưu Ý
-
-- ❌ Không lip-sync (môi không khớp)
-- ❌ Chất lượng dịch phụ thuộc vào model
-- ❌ Không xử lý realtime (chỉ batch processing)
-- ⚠️ TTS cần internet (sử dụng Edge TTS API)
-- ⚠️ **Yêu cầu GPU NVIDIA** - Không chạy được trên CPU
-- ⚠️ **VRAM tối thiểu 4GB** (khuyến nghị 6GB+)
-- ⚠️ Cần cài CUDA Toolkit và driver tương thíchESHOOTING.md#4-ffmpeg-errors)
-- Memory errors → [Giảm model size](TROUBLESHOOTING.md#5-memory-errors)
-  GPU acceleration cho Whisper~~ ✅ Done
-- [x] ~~GPU acceleration cho Translation~~ ✅ Done
-- [x] ~~Background audio liên tục~~ ✅ Done (v3)
-- [x] ~~Tự động chọn giọng nam/nữ~~ ✅ Done
-- [ ] Multi-GPU support
-- [ ] Batch processing nhiều videos
-- [ ] TensorRT optimization cho RTX GPUs
-- [ ] Hỗ trợ AMD GPU (ROCm)
-- [ ] Lip-sync với Wav2Lip (GPU)
-- [ ] UI web đơn giảnữ
-- [ ] UI web đơn giản
-- [ ] Tối ưu tốc độ xử lý (parallel processing)
-- [ ] Lip-sync với Wav2Lip
-
-## 📚 Documentation
-
-- [README.md](README.md) - Tài liệu chính
-- [BACKGROUND_AUDIO_GUIDE.md](BACKGROUND_AUDIO_GUIDE.md) - Hướng dẫn background audio
-- [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - Khắc phục lỗi
-- [IMPROVEMENTS.md](IMPROVEMENTS.md) - Lịch sử cải tiến
-
-## 📄 License
-
-MIT License - Tự do sử dụng và chỉnh sửa
-
-## 🤝 Đóng góp
-
-Mọi đóng góp đều được chào đón! Tạo Pull Request hoặc Issue trên GitHub.
+- **RVC**: RVC-Project Team
+- **Whisper**: OpenAI
+- **Tool**: Auto Dubbing Tool Team
 
 ---
 
-**Chúc bạn sử dụng tool hiệu quả! 🎉**
+**Version**: 1.0  
+**Date**: 2026-01-05  
+**Author**: Tool Lồng Tiếng
+
+🌟 **Star this repo if you find it useful!**
